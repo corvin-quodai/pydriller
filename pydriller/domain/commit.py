@@ -25,7 +25,7 @@ from typing import List, Set, Dict, Tuple, Optional
 
 import lizard
 import lizard_languages
-from git import Diff, Git, Commit as GitCommit, NULL_TREE
+from git import Diff, Blob, Git, Commit as GitCommit, NULL_TREE
 
 from pydriller.domain.developer import Developer
 
@@ -440,6 +440,7 @@ class Commit:
 
         self._modifications = None
         self._branches = None
+        self._blob_tree_dict = None
         self._conf = conf
 
     @property
@@ -570,6 +571,18 @@ class Commit:
 
         assert self._modifications is not None
         return self._modifications
+
+    @property
+    def blob_tree_dict(self) -> Dict[str, Blob]:
+        if self._blob_tree_dict is None:
+            self._blob_tree_dict = self._get_blob_tree_dict()
+        
+        assert self._blob_tree_dict is not None
+        return self._blob_tree_dict
+
+    def _get_blob_tree_dict(self):
+        return {e.path: e for e in self._c_object.tree.list_traverse() 
+                if isinstance(e, Blob)}
 
     def _get_modifications(self):
         options = {}
