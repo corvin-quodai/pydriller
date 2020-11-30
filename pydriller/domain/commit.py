@@ -152,6 +152,8 @@ class Modification:
         self.diff = diff_and_sc['diff']
         self.source_code = diff_and_sc['source_code']
         self.source_code_before = diff_and_sc['source_code_before']
+        self.blob_sha = diff_and_sc['blob_sha']
+        self.blob_sha_before = diff_and_sc['blob_sha_before']
 
         self._nloc = None
         self._complexity = None
@@ -611,6 +613,8 @@ class Commit:
             change_type = self._from_change_to_modification_type(diff)
 
             diff_and_sc = {
+                'blob_sha_before': diff.a_blob.hexsha, 
+                'blob_sha': diff.b_blob.hexsha,
                 'diff': self._get_decoded_str(diff.diff),
                 'source_code_before': self._get_decoded_sc_str(
                     diff.a_blob),
