@@ -613,8 +613,10 @@ class Commit:
             change_type = self._from_change_to_modification_type(diff)
 
             diff_and_sc = {
-                'blob_sha_before': diff.a_blob.hexsha, 
-                'blob_sha': diff.b_blob.hexsha,
+                'blob_sha_before': None if diff.a_blob is None 
+                                   else diff.a_blob.hexsha, 
+                'blob_sha': None if diff.b_blob is None
+                            else diff.b_blob.hexsha,
                 'diff': self._get_decoded_str(diff.diff),
                 'source_code_before': self._get_decoded_sc_str(
                     diff.a_blob),
