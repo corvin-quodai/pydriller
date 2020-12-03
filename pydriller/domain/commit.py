@@ -576,8 +576,7 @@ class Commit:
     @property
     def filepath_to_blob(self) -> Dict[str, Blob]:
         if self._filepath_to_blob is None:
-            self._filepath_to_blob, self._blob_sha_to_filepath = \
-                self._get_filepath_blob_mappings()
+            self._compute_filepath_blob_mappings()
         
         assert self._filepath_to_blob is not None
         return self._filepath_to_blob
@@ -585,20 +584,20 @@ class Commit:
     @property
     def blob_sha_to_filepath(self) -> Dict[str, Blob]:
         if self._blob_sha_to_filepath is None:
-            self._filepath_to_blob, self._blob_sha_to_filepath = \
-                self._get_filepath_blob_mappings()
+            self._compute_filepath_blob_mappings()
         
         assert self._blob_sha_to_filepath is not None
         return self._blob_sha_to_filepath
 
-    def _get_filepath_blob_mappings(self):
+    def _compute_filepath_blob_mappings(self):
         filepath_to_blob, blob_sha_to_filepath = {}, {}
         for e in self._c_object.tree.list_traverse():
             if isinstance(e, Blob):
                 filepath_to_blob[e.path] = e
                 blob_sha_to_filepath[e.hexsha] = e.path
-
-        return filepath_to_blob, blob_sha_to_filepath
+        
+        self._filepath_to_blob = filepath_to_blob
+        self._blob_sha_to_filepath = blob_sha_to_filepath
 
     def _get_modifications(self):
         options = {}
