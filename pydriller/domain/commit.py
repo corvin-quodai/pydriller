@@ -594,8 +594,10 @@ class Commit:
     def _get_filepath_blob_mappings(self):
         filepath_to_blob, blob_sha_to_filepath = {}, {}
         for e in self._c_object.tree.list_traverse():
-            filepath_to_blob[e.path] = e
-            blob_sha_to_filepath[e.hexsha] = e.path
+            if isinstance(e, Blob):
+                filepath_to_blob[e.path] = e
+                blob_sha_to_filepath[e.hexsha] = e.path
+
         return filepath_to_blob, blob_sha_to_filepath
 
     def _get_modifications(self):
