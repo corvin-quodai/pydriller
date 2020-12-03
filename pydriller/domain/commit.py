@@ -154,6 +154,8 @@ class Modification:
         self.source_code_before = diff_and_sc['source_code_before']
         self.blob_sha = diff_and_sc['blob_sha']
         self.blob_sha_before = diff_and_sc['blob_sha_before']
+        self.is_binary = False if not isinstance(self.diff, str) is None \
+            else self.diff[:12].lower().startswith('binary file')
 
         self._nloc = None
         self._complexity = None
