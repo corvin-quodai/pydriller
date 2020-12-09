@@ -25,7 +25,7 @@ from typing import List, Set, Dict, Tuple, Optional
 
 import lizard
 import lizard_languages
-from git import Diff, Git, Commit as GitCommit, NULL_TREE
+from git import Diff, Blob, Git, Commit as GitCommit, NULL_TREE
 
 from pydriller.domain.developer import Developer
 
@@ -152,6 +152,10 @@ class Modification:
         self.diff = diff_and_sc['diff']
         self.source_code = diff_and_sc['source_code']
         self.source_code_before = diff_and_sc['source_code_before']
+        self.blob_sha = diff_and_sc['blob_sha']
+        self.blob_sha_before = diff_and_sc['blob_sha_before']
+        self.is_binary = False if not isinstance(self.diff, str) \
+            else self.diff[:12].lower().startswith('binary file')
 
         self._nloc = None
         self._complexity = None
@@ -438,6 +442,8 @@ class Commit:
 
         self._modifications = None
         self._branches = None
+        self._filepath_to_blob = None
+        self._blob_sha_to_filepath = None
         self._conf = conf
 
     @property
@@ -569,6 +575,32 @@ class Commit:
         assert self._modifications is not None
         return self._modifications
 
+    @property
+    def filepath_to_blob(self) -> Dict[str, Blob]:
+        if self._filepath_to_blob is None:
+            self._compute_filepath_blob_mappings()
+        
+        assert self._filepath_to_blob is not None
+        return self._filepath_to_blob
+
+    @property
+    def blob_sha_to_filepath(self) -> Dict[str, Blob]:
+        if self._blob_sha_to_filepath is None:
+            self._compute_filepath_blob_mappings()
+        
+        assert self._blob_sha_to_filepath is not None
+        return self._blob_sha_to_filepath
+
+    def _compute_filepath_blob_mappings(self):
+        filepath_to_blob, blob_sha_to_filepath = {}, {}
+        for e in self._c_object.tree.list_traverse():
+            if isinstance(e, Blob):
+                filepath_to_blob[e.path] = e
+                blob_sha_to_filepath[e.hexsha] = e.path
+        
+        self._filepath_to_blob = filepath_to_blob
+        self._blob_sha_to_filepath = blob_sha_to_filepath
+
     def _get_modifications(self):
         options = {}
         if self._conf.get('histogram'):
@@ -611,6 +643,10 @@ class Commit:
             change_type = self._from_change_to_modification_type(diff)
 
             diff_and_sc = {
+                'blob_sha_before': None if diff.a_blob is None 
+                                   else diff.a_blob.hexsha, 
+                'blob_sha': None if diff.b_blob is None
+                            else diff.b_blob.hexsha,
                 'diff': self._get_decoded_str(diff.diff),
                 'source_code_before': self._get_decoded_sc_str(
                     diff.a_blob),
